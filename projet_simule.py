@@ -38,6 +38,13 @@ metriques = ["brute", "moy_10_sec", "moy_15_sec", "moy_20_sec", "moy_30_sec", "m
 topic = "TOUCAN" # le canal d'envoi des messages via MQTT
 
 
+# endroit pratique pour modifier tous les paramètres
+njours = 1  # nombre de jours
+nnoeuds = 1 # nombre de noeuds
+pas = 15    # en secondes
+attente = 0.100 # en secondes
+
+
 def SimuleCapteurs(mqttclient):
     led = machine.Pin("LED", machine.Pin.OUT)
     led.off()
@@ -45,7 +52,7 @@ def SimuleCapteurs(mqttclient):
     seed()
     # la liste des noeuds (capteurs)
     Noeud.ID = 1 # nécessaire car MicroPython travail de la memoire et ne remet pas cette valeur à 0
-    nombre_de_noeuds = 4  # Verification 2 (minimum 2)
+    nombre_de_noeuds = nnoeuds  # Verification 2 (minimum 2)
     noeuds = [Noeud() for i in range(nombre_de_noeuds)]
     # on s'assurer explicitement qu'il y ait au moins un capteur d'humidite et un de temperature,
     # car a l'interne, le choix est aleatoire, et il est arrive durant des tests que lorsqu'il y a
@@ -67,7 +74,7 @@ def SimuleCapteurs(mqttclient):
     # pour etablir la grandeur de notre pas (mesure en minutes)
 
     # Verification 3
-    intervalle = 60 # la grandeur de pas (en minutes)
+    intervalle = pas # la grandeur de pas (en minutes)
     tranches = 60 / intervalle # le nombre de tranches par heure
 
     # L'angle, lui, s'etale sur toute une journee (24 heures), on a donc besoin de savoir
@@ -91,7 +98,7 @@ def SimuleCapteurs(mqttclient):
 
     nombre_de_documents = 0  # compteur
 
-    for jour in range(jour, jour + 4): # Verification 4
+    for jour in range(jour, jour + njours): # Verification 4
         for heure in range(0, 24):
             for minute in range(0, 60, intervalle):
 
@@ -125,9 +132,6 @@ def SimuleCapteurs(mqttclient):
                     else:
                         valeur = noeud.humidite
 
-                    # on ajoute la donnee a la liste des donnees du noeud (non-implemente)
-                    #noeud.donnees.append(valeur) # Verification 5
-
                     # le document est prepare, puis insere
                     document = { "datetime" : date_et_heure,
                                  "noeud"    : noeud.ID,
@@ -145,7 +149,7 @@ def SimuleCapteurs(mqttclient):
 
                     # un delai plus long afin d'eviter de stresser MQTT
                     # on ne connait pas ses limites
-                    sleep(0.100)   # Verification 8
+                    sleep(attente)   # Verification 8
                     led.off()
                     compteur_noeuds += 1
 
